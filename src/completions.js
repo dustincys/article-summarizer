@@ -10,6 +10,11 @@ import { logger } from "./logger.js";
  * @param {"text-davinci-003"|"text-curie-001"} model - Davinci is the most powerful model, but it's also the most expensive
  * @returns
  */
+
+
+// 设置一个最大值
+// 设置openai 和 deepseek 切换开关
+
 async function createCompletion(prompt, model = "text-davinci-003") {
   const openai = new OpenAIApi(
     new Configuration({

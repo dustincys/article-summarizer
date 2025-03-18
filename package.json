@@ -14,8 +14,9 @@
     "dotenv": "^16.0.3",
     "inquirer": "^9.1.4",
     "jsdom": "^21.1.1",
-    "openai": "^3.1.0",
+    "openai": "^4.87.3",
     "ora": "^6.1.2",
+    "playwright": "^1.51.1",
     "yoctocolors": "^1.0.0"
   },
   "devDependencies": {
