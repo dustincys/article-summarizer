@@ -2,7 +2,6 @@ import { JSDOM } from "jsdom";
 import { Readability } from "@mozilla/readability";
 import { firefox } from "playwright";
 
-
 export async function parseWithPlaywright() {
     const urls = process.argv.slice(2);
 
@@ -33,7 +32,7 @@ export async function parseWithPlaywright() {
                 Object.defineProperty(Intl.DateTimeFormat.prototype, 'resolvedOptions', {
                     value: function () {
                         const result = Reflect.apply(this, this, arguments);
-                        result.timeZone = 'America/New_York';
+                        result.timeZone = 'Asia/Shanghai';
                         return result;
                     }
                 });
@@ -64,29 +63,38 @@ export async function parseWithPlaywright() {
                 // 获取完整渲染后的 HTML
                 const dynamicHtml = await page.content();
 
-                // 使用 JSDOM 解析
                 const dom = new JSDOM(dynamicHtml, {
-                    url: url  // 保留原始 URL 信息
+                    url: url
                 });
 
                 article = new Readability(dom.window.document).parse();
 
-                // 高级文本清理
-                const cleanText = article.textContent
-                    .replace(/\u00a0/g, ' ')    // 替换 &nbsp;
-                    .replace(/\s+[\r\n]\s+/g, '\n')  // 清理多余换行
-                    .trim();
+                if (!article) {
+                    results.push({
+                        order: index + 1,
+                        url,
+                        status: 'fail',
+                        title: '',
+                        content: '',
+                        excerpt: '',
+                        length: 0
+                    });
+                } else {
+                    const cleanText = article.textContent
+                        .replace(/\u00a0/g, ' ')    // 替换 &nbsp;
+                        .replace(/\s+[\r\n]\s+/g, '\n')  // 清理多余换行
+                        .trim();
 
-                results.push({
-                    order: index + 1,
-                    url,
-                    status: 'success',
-                    title: article.title,
-                    content: cleanText,
-                    excerpt: article.excerpt,
-                    length: cleanText.length
-                });
-
+                    results.push({
+                        order: index + 1,
+                        url,
+                        status: 'success',
+                        title: article.title,
+                        content: cleanText,
+                        excerpt: article.excerpt,
+                        length: cleanText.length
+                    });
+                }
             } catch (error) {
                 results.push({
                     order: index + 1,
