@@ -1,33 +1,29 @@
 import { config } from "dotenv";
-import { runCliPrompts } from "./cli-prompts.js";
-import { parseUrl } from "./parse-url.js";
+import { parseWithPlaywright } from "./parse-url.js";
 import { logger } from "./logger.js";
 import { getCompletion } from "./completions.js";
 
 // Load .env file
-config();
+// this file contains api key and prompt defined
+config({
+    path: "~/.env",
+    override: false,
+});
 
 /**
  * 1. Get the main content of the URL
  */
-const article = await parseUrl();
-const content = article.textContent.replace(/\n/g, " ");
-logger.info(article.title);
+///////////////////////////////////////////////////////////////////////////////
+//     Here we have to get text one by one, to avoid the anti-spider scheme  //
+///////////////////////////////////////////////////////////////////////////////
+const articles = await parseWithPlaywright();
+// logger.log(articles);
 
 /**
- * 2. Get the prompt from the user
+ * 2. Run the prompt against the URL's content
  */
-const { prompt, combinationPrompt } = await runCliPrompts();
-
-/**
- * 3. Run the prompt against the URL's content
- */
-const completion = await getCompletion({
-  content,
-  prompt,
-  combinationPrompt,
-});
+const responses = await getCompletion({articles});
 
 logger.success("Response ⤵️ ");
 
-logger.log(completion);
+logger.log(responses);

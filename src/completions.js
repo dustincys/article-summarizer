@@ -1,5 +1,5 @@
 import axios from "axios";
-import { Configuration, OpenAIApi } from "openai";
+import OpenAI from "openai";
 import cliSpinners from "cli-spinners";
 import { oraPromise } from "ora";
 import { logger } from "./logger.js";
@@ -15,106 +15,99 @@ import { logger } from "./logger.js";
 // 设置一个最大值
 // 设置openai 和 deepseek 切换开关
 
-async function createCompletion(prompt, model = "text-davinci-003") {
-  const openai = new OpenAIApi(
-    new Configuration({
-      apiKey: process.env.OPENAI_KEY,
-    })
-  );
-
-  try {
-    const response = await openai.createCompletion({
-      prompt,
-      model,
-      // 0.1 provides more straightforward and consistent responses. Higher numbers provides more diverse responses.
-      temperature: 0.1,
-      max_tokens: 500,
-    });
-
-    return response;
-  } catch (error) {
-    if (axios.default.isAxiosError(error) && error.response) {
-      logger.error("Error getting completion:");
-      logger.error(error.response.data.error?.message);
-    } else {
-      throw error;
+async function createCompletion(articleText) {
+    // logger.log("createCompletion");
+    // logger.log(articleText);
+    if (!articleText?.trim()) {
+        return ""; // 直接返回空字符串
     }
-    process.exit(1);
-  }
-}
 
-/**
- * Break the page's content into roughly equally distributed
- * chunks while preserving sentences, so that we don't exceed
- * the API's max token limit
- */
-function chunkTheContent(content) {
-  const maxChunkSize = 2000 * 4; // ~1 token = 4 characters
-  const chunks = [];
-  let chunk = "";
-  for (const sentence of content.split(/(?<=[.?!])\s+/)) {
-    if (chunk.length + sentence.length > maxChunkSize) {
-      chunks.push(chunk);
-      chunk = "";
-    }
-    chunk += sentence + " ";
-  }
+    try {
 
-  if (chunks.length === 0) return [content];
+        logger.log("apikey");
+        logger.log(process.env.APIKEY);
+        logger.log("baseurl");
+        logger.log(process.env.BASEURL);
 
-  return chunks;
-}
 
-export async function getCompletion({ content, prompt, combinationPrompt }) {
-  const chunks = chunkTheContent(content);
+        const client = new OpenAI(
+            {
+                apiKey: process.env.APIKEY,
+                baseURL: process.env.BASEURL,
+            }
+        );
 
-  const chunkRequests =
-    // limit to 40 chunks to avoid excessive API usage
-    chunks.slice(0, 40).map((chunk, index) =>
-      oraPromise(
-        async () => {
-          const response = await createCompletion(
-            `${prompt}:\n\n###${chunk}\n\n###`
-          );
-          return { index, response };
-        },
-        {
-          spinner: cliSpinners.earth,
-          text: "Generating response...",
+        logger.log("prompt");
+        logger.log(process.env.PROMPT);
+
+        const completion = await client.chat.completions.create({
+            model: process.env.MODEL,
+            messages: [
+                {
+                    role: "system",
+                    content: process.env.PROMPT,
+                },
+                {
+                    role: "user",
+                    content: articleText,
+                },
+            ],
+        });
+
+        logger.log("completion");
+        logger.log(completion);
+
+        logger.log("get response");
+        logger.log(completion?.choices[0].message?.content?.trim());
+
+        return completion?.choices[0].message?.content?.trim() || "";
+    } catch (error) {
+        if (axios.default.isAxiosError(error) && error.response) {
+            logger.error("Error getting completion:");
+            logger.error(error.response.data.error?.message);
+        } else {
+            throw error;
         }
-      )
-    );
-
-  const resolvedRequests = await Promise.all(chunkRequests);
-  // Preserve the order of the content completions
-  const responses = resolvedRequests
-    .sort((a, b) => a.index - b.index)
-    .map((r) => r.response);
-
-  if (chunks.length === 1) return responses[0].data.choices[0].text;
-
-  /**
-   * Do one final completion against the combination of all the completions
-   */
-  const combinedCompletions = responses
-    .map((r) => r.data.choices[0].text)
-    .join("\n----\n");
-
-  logger.info("Responses for all chunks ⤵️ ");
-  console.log(combinedCompletions);
-  logger.warn(
-    `Since the page's content was so long, the prompt had to be ran against chunks of the content. The following response is formed by running a combination prompt against all ${chunks.length} of the chunks' responses above.`
-  );
-
-  const finalCompletion = await oraPromise(
-    createCompletion(
-      `${combinationPrompt}:\n\n###${combinedCompletions}\n\n###`
-    ),
-    {
-      spinner: cliSpinners.moon,
-      text: "Combining responses...",
+        process.exit(1);
     }
-  );
+}
 
-  return finalCompletion.data.choices[0].text;
+
+// trim the articles //////////////////////////////////////////////////////////
+function trimTheContent(articles) {
+    return articles.map(item => ({
+        ...item, // 使用展开运算符保留其他字段
+        content: item.content
+            ? item.content.trim().slice(0, process.env.MAX_ARTICLE_LENGTH,) // 先trim再截断
+            : '' // 防御性处理空值
+    }));
+}
+
+export async function getCompletion({ articles }) {
+    const articlesTrimed = trimTheContent(articles);
+    // logger.log(articlesTrimed.map(article => article.content));
+
+    const articleRequests =
+        articlesTrimed.map((article, index) =>
+            oraPromise(
+                async () => {
+                    const response = await createCompletion(
+                        article.content
+                    );
+                    return { index, response };
+                },
+                {
+                    spinner: cliSpinners.earth,
+                    text: "Generating response...",
+                }
+            )
+        );
+
+    const resolvedRequests = await Promise.all(articleRequests);
+
+    // Preserve the order of the content completions
+    const responses = resolvedRequests
+          .sort((a, b) => a.index - b.index);
+
+    return responses;
 }

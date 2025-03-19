@@ -100,8 +100,10 @@ export async function parseWithPlaywright() {
                     order: index + 1,
                     url,
                     status: 'error',
-                    errorType: error.constructor.name,
-                    message: error.message
+                    title: '',
+                    content: '',
+                    excerpt: '',
+                    length: 0
                 });
             } finally {
                 await context.close();  // 关闭上下文释放资源
