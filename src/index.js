@@ -16,13 +16,15 @@ config({
 ///////////////////////////////////////////////////////////////////////////////
 //     Here we have to get text one by one, to avoid the anti-spider scheme  //
 ///////////////////////////////////////////////////////////////////////////////
-const articles = await parseWithPlaywright();
+
+const urls = process.argv.slice(2);
+const articles = await parseWithPlaywright(urls);
 // logger.log(articles);
 
 /**
  * 2. Run the prompt against the URL's content
  */
-const responses = await getCompletion({articles});
+const responses = await getCompletion({ articles });
 
 logger.success("Response ⤵️ ");
 

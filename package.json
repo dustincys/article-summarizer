@@ -3,7 +3,8 @@
   "version": "1.0.0",
   "type": "module",
   "scripts": {
-    "x": "node src/index.js"
+      "x": "node src/index.js",
+      "get": "node src/fetch-articles.js"
   },
   "engines": {
     "node": ">=18.0.0"

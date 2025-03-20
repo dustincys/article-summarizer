@@ -2,8 +2,7 @@ import { JSDOM } from "jsdom";
 import { Readability } from "@mozilla/readability";
 import { firefox } from "playwright";
 
-export async function parseWithPlaywright() {
-    const urls = process.argv.slice(2);
+export async function parseWithPlaywright(urls) {
 
     const browser = await firefox.launch({
         headless: true,

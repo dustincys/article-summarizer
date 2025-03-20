@@ -1,0 +1,19 @@
+* Plan
+
+** DONE maybe, it'd be better to use firefox driver    :article-summarizer:
+CLOSED: [2025-03-18 Tue 16:43]
+:LOGBOOK:
+- State "DONE"       from "TODO"       [2025-03-18 Tue 16:43]
+:END:
+[2025-03-17 Mon 15:41] In file: [[file:///home/dustin/github/article-summarizer/src/parse-url.js::11][parse-url.js]]
+For some nature journal,  the content is generated dynamically.
+#+BEGIN_SRC js2
+  const dom = await JSDOM.fromURL(url);
+#+END_SRC
+
+** TODO Need to update the API    :article-summarizer:
+[2025-03-17 Mon 15:57] In file: [[file:///home/dustin/github/article-summarizer/src/completions.js::14][completions.js]]
+#+BEGIN_SRC js2
+async function createCompletion(prompt, model = \"text-davinci-003\") {
+#+END_SRC
+

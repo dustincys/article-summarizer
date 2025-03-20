@@ -74,7 +74,7 @@ async function createCompletion(articleText) {
 
 
 // trim the articles //////////////////////////////////////////////////////////
-function trimTheContent(articles) {
+export function trimTheContent(articles) {
     return articles.map(item => ({
         ...item, // 使用展开运算符保留其他字段
         content: item.content
