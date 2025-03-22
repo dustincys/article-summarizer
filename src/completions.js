@@ -79,7 +79,7 @@ export async function getCompletion({ articles }) {
     const responses = resolvedRequests
         .sort((a, b) => a.index - b.index);
 
-    const articlesWithResponses = articles.map((article, index) => ({
+    const articlesWithResponses = articlesTrimed.map((article, index) => ({
         ...article,
         response: responses[index].response
     }));
