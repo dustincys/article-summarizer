@@ -81,7 +81,7 @@ export async function getCompletion({ articles }) {
 
     const articlesWithResponses = articlesTrimed.map((article, index) => ({
         ...article,
-        response: responses[index].response
+        summary: responses[index].response
     }));
 
     return articlesWithResponses;
