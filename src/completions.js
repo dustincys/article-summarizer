@@ -4,41 +4,19 @@ import cliSpinners from "cli-spinners";
 import { oraPromise } from "ora";
 import { logger } from "./logger.js";
 
-/**
- *
- * @param {string} prompt
- * @param {"text-davinci-003"|"text-curie-001"} model - Davinci is the most powerful model, but it's also the most expensive
- * @returns
- */
-
-
-// 设置一个最大值
-// 设置openai 和 deepseek 切换开关
 
 async function createCompletion(articleText) {
-    // logger.log("createCompletion");
-    // logger.log(articleText);
     if (!articleText?.trim()) {
-        return ""; // 直接返回空字符串
+        return "";
     }
 
     try {
-
-        logger.log("apikey");
-        logger.log(process.env.APIKEY);
-        logger.log("baseurl");
-        logger.log(process.env.BASEURL);
-
-
         const client = new OpenAI(
             {
                 apiKey: process.env.APIKEY,
                 baseURL: process.env.BASEURL,
             }
         );
-
-        logger.log("prompt");
-        logger.log(process.env.PROMPT);
 
         const completion = await client.chat.completions.create({
             model: process.env.MODEL,
@@ -53,12 +31,6 @@ async function createCompletion(articleText) {
                 },
             ],
         });
-
-        logger.log("completion");
-        logger.log(completion);
-
-        logger.log("get response");
-        logger.log(completion?.choices[0].message?.content?.trim());
 
         return completion?.choices[0].message?.content?.trim() || "";
     } catch (error) {
@@ -85,7 +57,6 @@ export function trimTheContent(articles) {
 
 export async function getCompletion({ articles }) {
     const articlesTrimed = trimTheContent(articles);
-    // logger.log(articlesTrimed.map(article => article.content));
 
     const articleRequests =
         articlesTrimed.map((article, index) =>
@@ -105,9 +76,13 @@ export async function getCompletion({ articles }) {
 
     const resolvedRequests = await Promise.all(articleRequests);
 
-    // Preserve the order of the content completions
     const responses = resolvedRequests
-          .sort((a, b) => a.index - b.index);
+        .sort((a, b) => a.index - b.index);
 
-    return responses;
+    const articlesWithResponses = articles.map((article, index) => ({
+        ...article,
+        response: responses[index].response
+    }));
+
+    return articlesWithResponses;
 }

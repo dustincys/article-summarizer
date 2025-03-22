@@ -2,6 +2,12 @@ import { JSDOM } from "jsdom";
 import { Readability } from "@mozilla/readability";
 import { firefox } from "playwright";
 
+const getSafeSelector = () => {
+    const raw = process.env.SELECTORS;
+    if (!raw) return 'body';
+    return decodeURIComponent(raw);  // 处理 %23 转义
+};
+
 export async function parseWithPlaywright(urls) {
 
     const browser = await firefox.launch({
@@ -26,7 +32,6 @@ export async function parseWithPlaywright(urls) {
             const context = await browser.newContext({
                 userAgent: 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10.15; rv:90.0) Gecko/20100101 Firefox/90.0'
             });
-            // 在上下文中设置随机时区
             await context.addInitScript(() => {
                 Object.defineProperty(Intl.DateTimeFormat.prototype, 'resolvedOptions', {
                     value: function () {
@@ -47,19 +52,16 @@ export async function parseWithPlaywright(urls) {
             let article = null;
 
             try {
-                // 智能等待策略
                 await page.goto(url, {
                     waitUntil: 'domcontentloaded',
                     timeout: 25000
                 });
 
-                // 等待主要内容区域（根据目标网站调整选择器）
-                await page.waitForSelector('article, .main-content, #content', {
+                await page.waitForSelector(getSafeSelector(), {
                     state: 'attached',
                     timeout: 15000
                 });
 
-                // 获取完整渲染后的 HTML
                 const dynamicHtml = await page.content();
 
                 const dom = new JSDOM(dynamicHtml, {
