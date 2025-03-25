@@ -3,8 +3,8 @@
   "version": "1.0.0",
   "type": "module",
   "scripts": {
-      "x": "node src/index.js",
-      "get": "node src/fetch-articles.js"
+    "x": "node src/index.js",
+    "get": "node src/fetch-articles.js"
   },
   "engines": {
     "node": ">=18.0.0"
@@ -19,9 +19,12 @@
     "openai": "^4.87.3",
     "ora": "^6.1.2",
     "playwright": "^1.51.1",
+    "puppeteer-extra": "^3.3.6",
+    "puppeteer-extra-plugin-stealth": "^2.11.2",
     "yoctocolors": "^1.0.0"
   },
   "devDependencies": {
+    "@playwright/test": "^1.52.0-alpha-2025-03-25",
     "@types/jsdom": "^21.1.0",
     "@types/node": "^18.15.3",
     "typescript": "^5.0.2"

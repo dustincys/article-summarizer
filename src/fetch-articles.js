@@ -12,8 +12,10 @@ config({
 const [inputFile, outputFile] = process.argv.slice(2);
 const urls = fs.readFileSync(inputFile, 'utf-8').split('\n').filter(Boolean);
 const articles = await parseWithPlaywright(urls);
-const responses = await getCompletion({ articles });
 
+logger.log("done extract articles");
+
+const responses = await getCompletion({ articles });
 fs.writeFileSync(outputFile, JSON.stringify(responses, null, 2));
 
 logger.success("done");

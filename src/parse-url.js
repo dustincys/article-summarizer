@@ -2,10 +2,26 @@ import { JSDOM } from "jsdom";
 import { Readability } from "@mozilla/readability";
 import { firefox } from "playwright";
 
+function bioRxivURL(original_url = "") {
+    try {
+        const url = new URL(original_url);
+        if (url.hostname.includes('biorxiv')) {
+            if (url.searchParams.get('rss') === '1') {
+                url.searchParams.delete('rss');
+                url.pathname += '.full';
+            }
+        }
+        return url.toString();
+    } catch (error) {
+        console.error('Invalid URL:', error);
+        return original_url;
+    }
+}
+
 const getSafeSelector = () => {
     const raw = process.env.SELECTORS;
     if (!raw) return 'body';
-    return decodeURIComponent(raw);  // 处理 %23 转义
+    return decodeURIComponent(raw);
 };
 
 export async function parseWithPlaywright(urls) {
@@ -14,9 +30,9 @@ export async function parseWithPlaywright(urls) {
         headless: true,
         firefoxUserPrefs: {
             "javascript.enabled": true,
-            "permissions.default.image": 2,  // 禁止加载图片
-            "network.http.redirection-limit": 32,  // 允许更多重定向
-            "media.volume_scale": "0.0"            // 静音
+            "permissions.default.image": 2,
+            "network.http.redirection-limit": 32,
+            "media.volume_scale": "0.0"
         },
         args: [
             '--disable-gpu',
@@ -43,16 +59,16 @@ export async function parseWithPlaywright(urls) {
             });
 
             const page = await context.newPage();
+            await page.route(/.*google*/, route => route.abort());
             await page.setViewportSize({
                 width: 1280 + Math.floor(Math.random() * 100),
                 height: 800 + Math.floor(Math.random() * 100)
             });
 
-
             let article = null;
 
             try {
-                await page.goto(url, {
+                await page.goto(bioRxivURL(url), {
                     waitUntil: 'domcontentloaded',
                     timeout: 25000
                 });
@@ -107,7 +123,7 @@ export async function parseWithPlaywright(urls) {
                     length: 0
                 });
             } finally {
-                await context.close();  // 关闭上下文释放资源
+                await context.close();
             }
         }
     } finally {
